@@ -14,10 +14,13 @@
         "ext-pcntl": "*",
         "ext-posix": "*",
         "ext-pdo": "*",
-        "nexph/core": "^0.1"
+        "nexph/core": "^0.1",
+        "nexph/support": "^0.1",
+        "nexph/observability": "^0.1"
     },
     "suggest": {
         "ext-apcu": "For runtime cache and APCu queue driver",
         "ext-redis": "For Redis queue, cache, and event bus"
     }
 }
+
