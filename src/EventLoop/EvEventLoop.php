@@ -28,6 +28,15 @@ class EvEventLoop implements EventLoopInterface
     {
     }
 
+    public function onSignal(int $signal, callable $callback): int
+    {
+        return 0;
+    }
+
+    public function removeSignal(int $id): void
+    {
+    }
+
     public function timer(float $seconds, callable $callback, bool $repeat = false): int
     {
         return 0;

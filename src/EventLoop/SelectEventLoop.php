@@ -14,6 +14,8 @@ class SelectEventLoop implements EventLoopInterface
     private array $readCallbacks = [];
     private array $writeStreams = [];
     private array $writeCallbacks = [];
+    private array $signalHandlers = [];
+    private int $nextSignalId = 1;
 
     public function __construct()
     {
@@ -45,6 +47,33 @@ class SelectEventLoop implements EventLoopInterface
     {
         $id = (int) $stream;
         unset($this->writeStreams[$id], $this->writeCallbacks[$id]);
+    }
+
+    public function onSignal(int $signal, callable $callback): int
+    {
+        if (!function_exists('pcntl_signal')) {
+            throw new \RuntimeException('pcntl extension required for signal handling');
+        }
+
+        $id = $this->nextSignalId++;
+        $this->signalHandlers[$id] = ['signal' => $signal, 'callback' => $callback];
+        
+        pcntl_signal($signal, function($signo) use ($id) {
+            if (isset($this->signalHandlers[$id])) {
+                ($this->signalHandlers[$id]['callback'])($signo);
+            }
+        });
+        
+        return $id;
+    }
+
+    public function removeSignal(int $id): void
+    {
+        if (isset($this->signalHandlers[$id])) {
+            $signal = $this->signalHandlers[$id]['signal'];
+            pcntl_signal($signal, SIG_DFL);
+            unset($this->signalHandlers[$id]);
+        }
     }
 
     public function timer(float $seconds, callable $callback, bool $repeat = false): int
@@ -121,6 +150,10 @@ class SelectEventLoop implements EventLoopInterface
 
     private function tick(): void
     {
+        if (function_exists('pcntl_signal_dispatch')) {
+            pcntl_signal_dispatch();
+        }
+
         $now = microtime(true);
         $this->processTimers($now);
         $this->pollIO();

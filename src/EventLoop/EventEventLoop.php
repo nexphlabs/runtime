@@ -12,6 +12,7 @@ class EventEventLoop implements EventLoopInterface
     private array $timers = [];
     private array $readWatchers = [];
     private array $writeWatchers = [];
+    private array $signalWatchers = [];
     private bool $running = false;
     private int $nextTimerId = 1;
 
@@ -64,6 +65,29 @@ class EventEventLoop implements EventLoopInterface
             $this->writeWatchers[$id]->del();
             $this->writeWatchers[$id]->free();
             unset($this->writeWatchers[$id]);
+        }
+    }
+
+    public function onSignal(int $signal, callable $callback): int
+    {
+        $id = $signal;
+        if (isset($this->signalWatchers[$id])) {
+            $this->signalWatchers[$id]->free();
+        }
+
+        $event = \Event::signal($this->base, $signal, $callback);
+        $event->add();
+        $this->signalWatchers[$id] = $event;
+        
+        return $id;
+    }
+
+    public function removeSignal(int $id): void
+    {
+        if (isset($this->signalWatchers[$id])) {
+            $this->signalWatchers[$id]->del();
+            $this->signalWatchers[$id]->free();
+            unset($this->signalWatchers[$id]);
         }
     }
 
