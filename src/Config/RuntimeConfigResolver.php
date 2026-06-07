@@ -32,6 +32,8 @@ class RuntimeConfigResolver
                 'max_read_callbacks_per_tick' => 256,
                 'max_write_callbacks_per_tick' => 256,
                 'max_deferred_per_tick' => 256,
+                'keep_alive_timeout' => 5,
+                'keep_alive_max_requests' => 100,
             ],
             'balanced' => [
                 'workers' => $cores * 2,
@@ -39,6 +41,8 @@ class RuntimeConfigResolver
                 'max_read_callbacks_per_tick' => 512,
                 'max_write_callbacks_per_tick' => 512,
                 'max_deferred_per_tick' => 512,
+                'keep_alive_timeout' => 10,
+                'keep_alive_max_requests' => 500,
             ],
             'throughput' => [
                 'workers' => $cores * 4,
@@ -46,6 +50,8 @@ class RuntimeConfigResolver
                 'max_read_callbacks_per_tick' => 2048,
                 'max_write_callbacks_per_tick' => 2048,
                 'max_deferred_per_tick' => 2048,
+                'keep_alive_timeout' => 30,
+                'keep_alive_max_requests' => 10000,
             ],
             'custom' => [],
             default => self::getRuntimeModePreset('balanced'),
@@ -63,6 +69,8 @@ class RuntimeConfigResolver
             'max_read_callbacks_per_tick' => null,
             'max_write_callbacks_per_tick' => null,
             'max_deferred_per_tick' => null,
+            'keep_alive_timeout' => null,
+            'keep_alive_max_requests' => null,
             'performance_mode' => false,
             'cpu_cores' => self::cpuCores(),
         ];
