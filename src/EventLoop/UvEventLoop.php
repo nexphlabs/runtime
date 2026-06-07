@@ -23,7 +23,7 @@ class UvEventLoop implements EventLoopInterface
 
     public function onReadable($stream, callable $callback): void
     {
-        $key = (int) $stream;
+        $key = is_resource($stream) ? (int) $stream : spl_object_id($stream);
         if (isset($this->readers[$key])) {
             return;
         }
@@ -36,7 +36,7 @@ class UvEventLoop implements EventLoopInterface
 
     public function removeReadable($stream): void
     {
-        $key = (int) $stream;
+        $key = is_resource($stream) ? (int) $stream : spl_object_id($stream);
         if (isset($this->readers[$key])) {
             uv_poll_stop($this->readers[$key]);
             unset($this->readers[$key]);
@@ -45,7 +45,7 @@ class UvEventLoop implements EventLoopInterface
 
     public function onWritable($stream, callable $callback): void
     {
-        $key = (int) $stream;
+        $key = is_resource($stream) ? (int) $stream : spl_object_id($stream);
         if (isset($this->writers[$key])) {
             return;
         }
@@ -58,7 +58,7 @@ class UvEventLoop implements EventLoopInterface
 
     public function removeWritable($stream): void
     {
-        $key = (int) $stream;
+        $key = is_resource($stream) ? (int) $stream : spl_object_id($stream);
         if (isset($this->writers[$key])) {
             uv_poll_stop($this->writers[$key]);
             unset($this->writers[$key]);

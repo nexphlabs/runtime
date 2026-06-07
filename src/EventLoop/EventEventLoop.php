@@ -26,7 +26,7 @@ class EventEventLoop implements EventLoopInterface
 
     public function onReadable($stream, callable $callback): void
     {
-        $id = (int) $stream;
+        $id = is_resource($stream) ? (int) $stream : spl_object_id($stream);
         if (isset($this->readWatchers[$id])) {
             $this->readWatchers[$id]->free();
         }
@@ -38,7 +38,7 @@ class EventEventLoop implements EventLoopInterface
 
     public function removeReadable($stream): void
     {
-        $id = (int) $stream;
+        $id = is_resource($stream) ? (int) $stream : spl_object_id($stream);
         if (isset($this->readWatchers[$id])) {
             $this->readWatchers[$id]->del();
             $this->readWatchers[$id]->free();
@@ -48,7 +48,7 @@ class EventEventLoop implements EventLoopInterface
 
     public function onWritable($stream, callable $callback): void
     {
-        $id = (int) $stream;
+        $id = is_resource($stream) ? (int) $stream : spl_object_id($stream);
         if (isset($this->writeWatchers[$id])) {
             $this->writeWatchers[$id]->free();
         }
@@ -60,7 +60,7 @@ class EventEventLoop implements EventLoopInterface
 
     public function removeWritable($stream): void
     {
-        $id = (int) $stream;
+        $id = is_resource($stream) ? (int) $stream : spl_object_id($stream);
         if (isset($this->writeWatchers[$id])) {
             $this->writeWatchers[$id]->del();
             $this->writeWatchers[$id]->free();

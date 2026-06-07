@@ -21,7 +21,7 @@ class EvEventLoop implements EventLoopInterface
 
     public function onReadable($stream, callable $callback): void
     {
-        $key = (int) $stream;
+        $key = is_resource($stream) ? (int) $stream : spl_object_id($stream);
         if (isset($this->readers[$key])) {
             return;
         }
@@ -35,7 +35,7 @@ class EvEventLoop implements EventLoopInterface
 
     public function removeReadable($stream): void
     {
-        $key = (int) $stream;
+        $key = is_resource($stream) ? (int) $stream : spl_object_id($stream);
         if (isset($this->readers[$key])) {
             $this->readers[$key]->stop();
             unset($this->readers[$key]);
@@ -44,7 +44,7 @@ class EvEventLoop implements EventLoopInterface
 
     public function onWritable($stream, callable $callback): void
     {
-        $key = (int) $stream;
+        $key = is_resource($stream) ? (int) $stream : spl_object_id($stream);
         if (isset($this->writers[$key])) {
             return;
         }
@@ -58,7 +58,7 @@ class EvEventLoop implements EventLoopInterface
 
     public function removeWritable($stream): void
     {
-        $key = (int) $stream;
+        $key = is_resource($stream) ? (int) $stream : spl_object_id($stream);
         if (isset($this->writers[$key])) {
             $this->writers[$key]->stop();
             unset($this->writers[$key]);
