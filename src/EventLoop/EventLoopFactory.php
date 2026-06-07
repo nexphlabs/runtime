@@ -8,6 +8,24 @@ class EventLoopFactory
 {
     public static function create(): EventLoopInterface
     {
+        $override = getenv('NEXPH_LOOP');
+        
+        if ($override === 'select') {
+            return new SelectEventLoop();
+        }
+        
+        if ($override === 'event' && ExtensionDetector::has('event')) {
+            return new EventEventLoop();
+        }
+        
+        if ($override === 'ev' && ExtensionDetector::has('ev')) {
+            return new EvEventLoop();
+        }
+        
+        if ($override === 'uv' && ExtensionDetector::has('uv')) {
+            return new UvEventLoop();
+        }
+
         if (ExtensionDetector::has('event')) {
             return new EventEventLoop();
         }
