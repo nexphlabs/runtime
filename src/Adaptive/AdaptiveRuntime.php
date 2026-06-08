@@ -20,6 +20,7 @@ final class AdaptiveRuntime
     public LoopFairnessGuard $fairness;
     private RuntimePressureScore $scorer;
     private ?SharedWorkerTable $sharedTable;
+    private bool $acceptThrottlingEnabled;
 
     private static array $instances = [];
 
@@ -48,6 +49,7 @@ final class AdaptiveRuntime
             $config['max_writes_per_connection_tick'] ?? 8
         );
 
+        $this->acceptThrottlingEnabled = $config['adaptive_accept_enabled'] ?? false;
         $this->sharedTable = $sharedTable;
     }
 
@@ -72,6 +74,11 @@ final class AdaptiveRuntime
     public function pressure(): float
     {
         return $this->scorer->calculate($this->stats);
+    }
+
+    public function isAcceptThrottlingEnabled(): bool
+    {
+        return $this->acceptThrottlingEnabled;
     }
 
     public static function get(int $workerId = 1): self

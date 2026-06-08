@@ -30,25 +30,22 @@ final class AdaptiveAcceptController
         $stats->runtimePressureScore = $pressure;
 
         if ($pressure >= RuntimePressureScore::BUSY) {
-            $stats->acceptPaused = true;
-            return 0;
+            $stats->acceptPaused = false;
+            return max(1, intdiv($this->maxAccept, 4));
         }
 
         $stats->acceptPaused = false;
 
         if ($pressure >= RuntimePressureScore::HEALTHY) {
-            // busy zone: allow 2
-            return max($this->minAccept, 2);
+            return max($this->minAccept, intdiv($this->maxAccept, 2));
         }
 
         if ($pressure >= RuntimePressureScore::IDLE) {
-            // healthy zone: scale linearly between 2 and maxAccept
             $ratio = 1.0 - (($pressure - RuntimePressureScore::IDLE)
                           / (RuntimePressureScore::HEALTHY - RuntimePressureScore::IDLE));
             return max($this->minAccept, (int) round($ratio * $this->maxAccept));
         }
 
-        // idle zone: full throttle
         return $this->maxAccept;
     }
 
