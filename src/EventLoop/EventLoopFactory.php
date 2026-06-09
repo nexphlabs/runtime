@@ -6,9 +6,9 @@ use Nexph\Support\Extension\ExtensionDetector;
 
 class EventLoopFactory
 {
-    public static function create(): EventLoopInterface
+    public static function create(?string $preferred = null): EventLoopInterface
     {
-        $override = getenv('NEXPH_LOOP');
+        $override = getenv('NEXPH_LOOP') ?: $preferred;
         
         if ($override === 'select') {
             return new SelectEventLoop();
