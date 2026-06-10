@@ -23,30 +23,46 @@ class SelectEventLoop implements EventLoopInterface
         $this->timerHeap->setExtractFlags(\SplPriorityQueue::EXTR_DATA);
     }
 
+    private function streamId($stream): int
+    {
+        return is_resource($stream) ? (int) $stream : spl_object_id($stream);
+    }
+
+    private function isValidStream($stream): bool
+    {
+        return is_resource($stream) || $stream instanceof \Socket;
+    }
+
     public function onReadable($stream, callable $callback): void
     {
-        $id = (int) $stream;
+        $id = $this->streamId($stream);
         $this->readStreams[$id] = $stream;
         $this->readCallbacks[$id] = $callback;
     }
 
     public function removeReadable($stream): void
     {
-        $id = (int) $stream;
+        $id = $this->streamId($stream);
         unset($this->readStreams[$id], $this->readCallbacks[$id]);
+        if (is_resource($stream)) {
+            @fclose($stream);
+        }
     }
 
     public function onWritable($stream, callable $callback): void
     {
-        $id = (int) $stream;
+        $id = $this->streamId($stream);
         $this->writeStreams[$id] = $stream;
         $this->writeCallbacks[$id] = $callback;
     }
 
     public function removeWritable($stream): void
     {
-        $id = (int) $stream;
+        $id = $this->streamId($stream);
         unset($this->writeStreams[$id], $this->writeCallbacks[$id]);
+        if (is_resource($stream)) {
+            @fclose($stream);
+        }
     }
 
     public function onSignal(int $signal, callable $callback): int
@@ -235,32 +251,111 @@ class SelectEventLoop implements EventLoopInterface
             return;
         }
 
-        $read = array_values($this->readStreams);
-        $write = array_values($this->writeStreams);
-        $except = null;
-        $tvSec = 0;
-        $tvUsec = 10000;
+        $this->cleanInvalidStreams();
 
+        if (empty($this->readStreams) && empty($this->writeStreams)) {
+            return;
+        }
+
+        $readStreams = [];
+        $writeStreams = [];
+        $readSockets = [];
+        $writeSockets = [];
+
+        foreach ($this->readStreams as $stream) {
+            if ($stream instanceof \Socket) {
+                $readSockets[] = $stream;
+            } elseif (is_resource($stream)) {
+                $readStreams[] = $stream;
+            }
+        }
+
+        foreach ($this->writeStreams as $stream) {
+            if ($stream instanceof \Socket) {
+                $writeSockets[] = $stream;
+            } elseif (is_resource($stream)) {
+                $writeStreams[] = $stream;
+            }
+        }
+
+        $this->pollStreams($readStreams, $writeStreams);
+        $this->pollSockets($readSockets, $writeSockets);
+    }
+
+    private function pollStreams(array $read, array $write): void
+    {
         if (empty($read) && empty($write)) {
             return;
         }
 
-        $result = @stream_select($read, $write, $except, $tvSec, $tvUsec);
+        $except = null;
+        try {
+            $result = @stream_select($read, $write, $except, 0, 10000);
+        } catch (\TypeError|\ValueError) {
+            $this->cleanInvalidStreams();
+            return;
+        }
+
         if ($result === false || $result === 0) {
             return;
         }
 
-        foreach ($read as $stream) {
-            $id = (int) $stream;
+        $this->dispatchReadable($read);
+        $this->dispatchWritable($write);
+    }
+
+    private function pollSockets(array $read, array $write): void
+    {
+        if (empty($read) && empty($write)) {
+            return;
+        }
+
+        $except = [];
+        try {
+            $result = @socket_select($read, $write, $except, 0, 10000);
+        } catch (\TypeError|\ValueError) {
+            $this->cleanInvalidStreams();
+            return;
+        }
+
+        if ($result === false || $result === 0) {
+            return;
+        }
+
+        $this->dispatchReadable($read);
+        $this->dispatchWritable($write);
+    }
+
+    private function dispatchReadable(array $streams): void
+    {
+        foreach ($streams as $stream) {
+            $id = $this->streamId($stream);
             if (isset($this->readCallbacks[$id])) {
                 ($this->readCallbacks[$id])($stream);
             }
         }
+    }
 
-        foreach ($write as $stream) {
-            $id = (int) $stream;
+    private function dispatchWritable(array $streams): void
+    {
+        foreach ($streams as $stream) {
+            $id = $this->streamId($stream);
             if (isset($this->writeCallbacks[$id])) {
                 ($this->writeCallbacks[$id])($stream);
+            }
+        }
+    }
+
+    private function cleanInvalidStreams(): void
+    {
+        foreach ($this->readStreams as $id => $stream) {
+            if (!$this->isValidStream($stream)) {
+                unset($this->readStreams[$id], $this->readCallbacks[$id]);
+            }
+        }
+        foreach ($this->writeStreams as $id => $stream) {
+            if (!$this->isValidStream($stream)) {
+                unset($this->writeStreams[$id], $this->writeCallbacks[$id]);
             }
         }
     }
