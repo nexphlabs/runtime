@@ -14,8 +14,7 @@ use Nexph\Runtime\Runtime;
 use Nexph\Runtime\Timer;
 
 /**
- * Coroutine-aware scheduler/cron subsystem.
- * Uses existing timer and event-loop infrastructure with explicit APIs.
+ * @deprecated Use \Nexph\Scheduler\SchedulerRuntime as the scheduler source of truth.
  */
 class Schedule {
     private array $tasks = [];

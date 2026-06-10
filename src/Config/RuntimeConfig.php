@@ -11,6 +11,11 @@ class RuntimeConfig
         $this->config = $config;
     }
 
+    public static function fromArray(array $config): self
+    {
+        return new self($config);
+    }
+
     public function get(string $key, $default = null)
     {
         return $this->config[$key] ?? $default;
