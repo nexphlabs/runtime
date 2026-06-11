@@ -13,9 +13,9 @@
         "ext-pcntl": "*",
         "ext-posix": "*",
         "ext-pdo": "*",
-        "nexph/core": "^0.1",
-        "nexph/support": "^0.1",
-        "nexph/observability": "^0.1"
+        "nexph/core": "^0.0",
+        "nexph/support": "^0.0",
+        "nexph/observability": "^0.0"
     },
     "suggest": {
         "ext-apcu": "For runtime cache and APCu queue driver",
